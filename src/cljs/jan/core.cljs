@@ -23,9 +23,11 @@
 
 
 ;;;;
-
-(defonce game (p/create-game 1000  1000))
+(def size (atom {:width (.-innerWidth js/window)
+                 :height (.-innerHeight js/window)}))
+(defonce game (p/create-game (:width @size) (:height @size)))
 (defonce state (atom {}))
+
 
 ; define a screen, where all the action takes place
 (def main-screen
@@ -45,7 +47,7 @@
       ; as you can see, everything is specified as a hiccup-style data structure
       (p/render game
         [[:fill {:color "lightblue"}
-          [:rect {:x 0 :y 0 :width 1000 :height 1000}]]
+          [:rect {:x 0 :y 0 :width (:width @size) :height (:height @size)}]]
          [:fill {:color "black"}
           [:text {:value "Hello, world!" :x (:text-x @state) :y (:text-y @state) :size 16 :font "Georgia" :style :italic}]]])
       ; increment the x position of the text so it scrolls to the right
