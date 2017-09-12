@@ -7,21 +7,58 @@
             [markdown.core :refer [md->html]]
             [jan.ajax :refer [load-interceptors!]]
             [ajax.core :refer [GET POST]]
-            [jan.ws :as ws])
+            [jan.ws :as ws]
+            [play-cljs.core :as p]
+            )
   (:import goog.History))
 
 ;; -----------------------
 ;; Logic
 
-
-
-(defonce state (atom 0))
 (defonce messages (atom []))
 
 (defn update-messages! [{:keys [message]}]
+  (println message)
   (swap! messages #(take 10 (cons message %))))
 
-;; -----------------------
+
+;;;;
+
+(defonce game (p/create-game 1000  1000))
+(defonce state (atom {}))
+
+; define a screen, where all the action takes place
+(def main-screen
+  (reify p/Screen
+  
+    ; runs when the screen is first shown
+    (on-show [this]
+      ; start the state map with the x and y position of the text we want to display
+      (reset! state {:text-x 20 :text-y 30}))
+
+    ; runs when the screen is hidden
+    (on-hide [this])
+
+    ; runs every time a frame must be drawn (about 60 times per sec)
+    (on-render [this]
+      ; we use `render` to display a light blue background and black text
+      ; as you can see, everything is specified as a hiccup-style data structure
+      (p/render game
+        [[:fill {:color "lightblue"}
+          [:rect {:x 0 :y 0 :width 1000 :height 1000}]]
+         [:fill {:color "black"}
+          [:text {:value "Hello, world!" :x (:text-x @state) :y (:text-y @state) :size 16 :font "Georgia" :style :italic}]]])
+      ; increment the x position of the text so it scrolls to the right
+      (swap! state update :text-x inc))))
+
+; start the game
+(doto game
+  (p/start)
+  (p/set-screen main-screen))
+;;;
+
+
+;; ---------------------
 ;; DOM
 
 (defn message-list []
@@ -44,49 +81,12 @@
             {:message @value})
            (reset! value nil))}])))
 
-
-
-(defn nav-link [uri title page collapsed?]
-  [:li.nav-item
-   {:class (when (= page (session/get :page)) "active")}
-   [:a.nav-link
-    {:href uri
-     :on-click #(reset! collapsed? true)} title]])
-
-(defn navbar []
-  (let [collapsed? (r/atom true)]
-    (fn []
-      [:nav.navbar.navbar-dark.bg-primary
-       [:button.navbar-toggler.hidden-sm-up
-        {:on-click #(swap! collapsed? not)} "☰"]
-       [:div.collapse.navbar-toggleable-xs
-        (when-not @collapsed? {:class "in"})
-        [:a.navbar-brand {:href "#/"} "jan"]
-        [:ul.nav.navbar-nav
-         [nav-link "#/" "Home" :home collapsed?]
-         [nav-link "#/about" "About" :about collapsed?]]]])))
-
-(defn about-page []
-  [:div.container
-   [:div.row
-    [:div.col-md-12
-     [:img {:src (str js/context "/img/warning_clojure.png")}]]]])
-
 (defn home-page []
-  [:div.container
-   [:div.row
-    [:div.col-md-12
-     [:h2 "Welcome to chat"]]]
-   [:div.row
-    [:div.col-sm-6
-     [message-list]]]
-   [:div.row
-    [:div.col-sm-6
-     [message-input]]]])
+  [:div ])
 
 (def pages
   {:home #'home-page
-   :about #'about-page})
+   })
 
 (defn page []
   [(pages (session/get :page))])
@@ -100,7 +100,7 @@
 
 (secretary/defroute "/about" []
   (session/put! :page :about))
-
+  
 ;; -------------------------
 ;; History
 ;; must be called after routes have been defined
@@ -118,8 +118,9 @@
   (GET "/docs" {:handler #(session/put! :docs %)}))
 
 (defn mount-components []
-  (r/render [#'navbar] (.getElementById js/document "navbar"))
-  (r/render [#'page] (.getElementById js/document "app")))
+  ;(r/render [#'navbar] (.getElementById js/document "navbar"))
+  (r/render [#'page] (.getElementById js/document "app"))
+  )
 
 (defn init! []
   (load-interceptors!)

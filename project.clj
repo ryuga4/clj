@@ -28,7 +28,9 @@
                  [ring/ring-core "1.6.2"]
                  [ring/ring-defaults "0.3.1"]
                  [secretary "1.2.3"]
-                 [selmer "1.11.0"]]
+                 [selmer "1.11.0"]
+                 [rm-hull/monet "0.3.0"]
+                 [play-cljs "0.10.1"]]
 
   :min-lein-version "2.0.0"
 

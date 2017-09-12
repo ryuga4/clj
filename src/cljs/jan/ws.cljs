@@ -9,6 +9,7 @@
 (defn receive-transit-msg!
   [update-fn]
   (fn [msg]
+    (println "przyszlo ")
     (update-fn
      (->> msg .-data (t/read json-reader)))))
 
